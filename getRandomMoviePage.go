@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/html"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -24,14 +23,12 @@ var listParts = [8]string{
 	"W–Z",
 }
 
-var findRedlink = regexp.MustCompile("redlink=1")
-
-// Returns a random WikiQuotes page about a movie.
-func getRandomMoviePage() (moviePage string) {
+// Returns a random WikiQuotes page about a movie as *html.Node.
+func getRandomMoviePage() (moviePage *html.Node) {
 	rand.Seed(time.Now().UnixNano())
 	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[rand.Intn(8)])
 
-	document := stringToDom(fetchPage(startURL))
+	document := fetchPage(startURL)
 
 	movieLinks := make([]string, 0)
 	for _, node := range querySelectorAll(document, "i") {
@@ -46,12 +43,14 @@ func getRandomMoviePage() (moviePage string) {
 	return
 }
 
-
-
-func extractLink(n *html.Node) (string, error) {
-	if n.Type == html.ElementNode && n.Data == "a" {
-		for _, a := range n.Attr {
+// Extracts the "href" attribute of the first a-tag child it find within a given container node.
+// This function assumes every node it checks to have only one child.
+// Siblings do not get checked.
+func extractLink(node *html.Node) (string, error) {
+	if node.Type == html.ElementNode && node.Data == "a" {
+		for _, a := range node.Attr {
 			if a.Key == "href" {
+				findRedlink := regexp.MustCompile("redlink=1")
 				if findRedlink.MatchString(a.Val) {
 					return "", errors.New("Found link was a red link")
 				}
@@ -59,22 +58,22 @@ func extractLink(n *html.Node) (string, error) {
 			}
 		}
 	}
-	if n.FirstChild == nil {
+	if node.FirstChild == nil {
 		return "", errors.New("No link found")
 	}
-	return extractLink(n.FirstChild)
+	return extractLink(node.FirstChild)
 }
 
-func fetchPage(URL string) (page string) {
+// Takes a URL and returns the fetched page as *html.Node.
+func fetchPage(URL string) (page *html.Node) {
 	res, err := http.Get(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	body, err := ioutil.ReadAll(res.Body)
+	page, err = html.Parse(res.Body)
 	res.Body.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	page = string(body)
 	return
 }

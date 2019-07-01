@@ -5,6 +5,8 @@ import (
 	"regexp"
 )
 
+// A helper for use in the querySelector functions.
+// It returns a function that tests for either a specific id, class or tag name depending on selector.
 func getTest(selector string) func(*html.Node) bool {
 	switch string(selector[0]) {
 	case "#":
