@@ -5,11 +5,11 @@ import (
 	"regexp"
 )
 
-func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) {
-	var test func(*html.Node) bool
+func getTest(selector string) func(*html.Node) bool {
 	switch string(selector[0]) {
 	case "#":
-		test = func(node *html.Node) bool {
+		// Select by id.
+		return func(node *html.Node) bool {
 			if node.Type == html.ElementNode {
 				for _, attr := range node.Attr {
 					if attr.Key == "id" && attr.Val == selector[1:] {
@@ -21,7 +21,8 @@ func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) 
 			return false
 		}
 	case ".":
-		test = func(node *html.Node) bool {
+		// Select by class.
+		return func(node *html.Node) bool {
 			if node.Type == html.ElementNode {
 				for _, attr := range node.Attr {
 					if attr.Key == "class" {
@@ -36,16 +37,42 @@ func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) 
 			return false
 		}
 	default:
-		test = func(node *html.Node) bool {
+		// Select by tag name.
+		return func(node *html.Node) bool {
 			if node.Type == html.ElementNode && node.Data == selector {
 				return true
 			}
 			return false
 		}
 	}
+}
+
+
+// TODO: This function doesn't work properly at the moment. Fix it!
+// func querySelector(root *html.Node, selector string) (node *html.Node) {
+// 	test := getTest(selector)
+
+// 	// TODO: An iterative approach would work better for this one. Rewrite it!
+// 	var walker func(*html.Node)
+// 	walker = func(n *html.Node) {
+// 		if test(node) {
+// 			node = n
+// 		} else {
+// 			for c := n.FirstChild; c != nil; c = c.NextSibling {
+// 				walker(c)
+// 			}
+// 		}
+		
+// 	}
+// 	walker(root)
+// 	return
+// }
+
+func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) {
+	test := getTest(selector)
 
 	nodeList = make([]*html.Node, 0)
-	
+
 	var walker func(*html.Node)
 	walker = func(node *html.Node) {
 		if test(node) {

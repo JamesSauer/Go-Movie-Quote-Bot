@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 )
 
@@ -32,27 +31,15 @@ func getRandomMoviePage() (moviePage string) {
 	rand.Seed(time.Now().UnixNano())
 	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[rand.Intn(8)])
 
-	listPage := fetchPage(startURL)
-	doc, err := html.Parse(strings.NewReader(listPage))
-	if err != nil {
-		log.Fatal(err)
-	}
+	document := stringToDom(fetchPage(startURL))
 
 	movieLinks := make([]string, 0)
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "i" {
-			link, err := extractLink(n)
+	for _, node := range querySelectorAll(document, "i") {
+		link, err := extractLink(node)
 			if err == nil {
 				movieLinks = append(movieLinks, link)
 			}
-			return
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
 	}
-	f(doc)
 
 	randomLink := fmt.Sprintf("%s", movieLinks[rand.Intn(len(movieLinks))])
 	moviePage = fetchPage("https://en.wikiquote.org" + randomLink)
