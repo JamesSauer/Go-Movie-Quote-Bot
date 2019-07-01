@@ -1,5 +1,5 @@
 # Random Movie Quote Bot
-* Picks a random movie entry from [WikiQuote](https://en.wikiquote.org)
+* Crawls [WikiQuote](https://en.wikiquote.org) for a random movie entry
 * Scrapes all quotes off that page
 * Picks one at random and prints it to the console
 

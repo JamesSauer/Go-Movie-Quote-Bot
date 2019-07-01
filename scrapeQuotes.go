@@ -9,23 +9,18 @@ type quote struct{
 	character int
 }
 
-// Takes a wiki quotes page as string and returns a slice of quotes,
+// Takes a wikiquote page as *html.Node and returns a slice of quotes,
 // a slice of characters the quotes are attributed to as well as the title of the movie.
 func scrapeQuotes(document *html.Node) (quotes []quote, characters []string, title string) {
 	quotes = make([]quote, 0)
 	characters = make([]string, 0)
-	/* TODO: The following causes a panic some of the times with the following error message:
-	"invalid memory address or nil pointer dereference"
-	This is probably because of the inconsistent page structure on WikiQuotes, but can easily be fixed
-	by determining how deep to go dynamically. Fix it!
-	*/
-	title = querySelectorAll(document, "#firstHeading")[0].FirstChild.FirstChild.Data
+	title = extractText(querySelectorAll(document, "#firstHeading")[0])
 
 	headings := querySelectorAll(document, ".mw-headline")
 	
 	for _, heading := range headings {
-		character := heading.FirstChild.Data
-		if !isCharacterHeading(character) {
+		character := extractText(heading)
+		if !isCharacter(character) {
 			continue
 		}
 		characters = append(characters, character)
@@ -67,6 +62,16 @@ func getNextElementSibling(node *html.Node) (sibling *html.Node) {
 	return nil
 }
 
+func getFirstElementChild(node *html.Node) (firstChild *html.Node) {
+	// TODO: This function does almost the exact same thing as the one above. Merge them!
+	for firstChild = node.FirstChild; firstChild != nil; firstChild = firstChild.NextSibling {
+		if firstChild.Type == html.ElementNode {
+			return
+		}
+	}
+	return nil
+}
+
 var nonCharacterHeadings = [7]string{
 	"Contents",
 	"Dialogue",
@@ -77,7 +82,7 @@ var nonCharacterHeadings = [7]string{
 	"See also",
 }
 
-func isCharacterHeading(title string) bool {
+func isCharacter(title string) bool {
 	for _, v := range nonCharacterHeadings {
 		if v == title {
 			return false

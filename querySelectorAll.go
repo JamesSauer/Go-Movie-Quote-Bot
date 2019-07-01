@@ -8,6 +8,8 @@ import (
 // A helper for use in the querySelector functions.
 // It returns a function that tests for either a specific id, class or tag name depending on selector.
 func getTest(selector string) func(*html.Node) bool {
+	// TODO: The regexps in here aren't very robust. Improve them!
+	// TODO: Make it accept compound selectors, like ".mw-headline.highlightes" or "a.outbound".
 	switch string(selector[0]) {
 	case "#":
 		// Select by id.

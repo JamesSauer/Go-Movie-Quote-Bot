@@ -5,8 +5,7 @@ import (
 	"math/rand"
 )
 
-/*
-TODO:
+/* TODO:
 - Fix TODOs tied to specific code snippets before tackling the ones below.
 - Use gofmt.
 - Split off querySelectors and other DOM helpers into a separate package.
