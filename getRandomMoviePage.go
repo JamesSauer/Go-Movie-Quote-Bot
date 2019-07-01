@@ -23,7 +23,7 @@ var listParts = [8]string{
 	"W–Z",
 }
 
-// Returns a random WikiQuotes page about a movie as *html.Node.
+// Returns a random WikiQuotes.org page about a movie as *html.Node.
 func getRandomMoviePage() (moviePage *html.Node) {
 	rand.Seed(time.Now().UnixNano())
 	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[rand.Intn(8)])
@@ -43,10 +43,11 @@ func getRandomMoviePage() (moviePage *html.Node) {
 	return
 }
 
-// Extracts the "href" attribute of the first a-tag child it find within a given container node.
+// Extracts the "href" attribute of the first a-tag child it finds within a given container node.
 // This function assumes every node it checks to have only one child.
 // Siblings do not get checked.
 func extractLink(node *html.Node) (string, error) {
+	// TODO: Make use of querySelector for this, as it does most of what this function does as well.
 	if node.Type == html.ElementNode && node.Data == "a" {
 		for _, a := range node.Attr {
 			if a.Key == "href" {

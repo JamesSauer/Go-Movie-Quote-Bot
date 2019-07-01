@@ -5,6 +5,10 @@ import (
 	"regexp"
 )
 
+
+/* TODO: Look into using goquery to replace the functions below. https://github.com/PuerkitoBio/goquery
+*/
+
 // A helper for use in the querySelector functions.
 // It returns a function that tests for either a specific id, class or tag name depending on selector.
 func getTest(selector string) func(*html.Node) bool {
@@ -51,26 +55,6 @@ func getTest(selector string) func(*html.Node) bool {
 	}
 }
 
-
-// TODO: This function doesn't work properly at the moment. Fix it!
-// func querySelector(root *html.Node, selector string) (node *html.Node) {
-// 	test := getTest(selector)
-
-// 	// TODO: An iterative approach would work better for this one. Rewrite it!
-// 	var walker func(*html.Node)
-// 	walker = func(n *html.Node) {
-// 		if test(node) {
-// 			node = n
-// 		} else {
-// 			for c := n.FirstChild; c != nil; c = c.NextSibling {
-// 				walker(c)
-// 			}
-// 		}
-		
-// 	}
-// 	walker(root)
-// 	return
-// }
 
 func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) {
 	test := getTest(selector)
