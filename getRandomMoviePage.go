@@ -1,9 +1,8 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"golang.org/x/net/html"
+	"github.com/PuerkitoBio/goquery"
 	"log"
 	"math/rand"
 	"net/http"
@@ -23,55 +22,34 @@ var listParts = [8]string{
 	"W–Z",
 }
 
-// Returns a random WikiQuotes.org page about a movie as *html.Node.
-func getRandomMoviePage() (moviePage *html.Node) {
+// Returns the URL of a random WikiQuotes.org page about a movie as a string.
+func getRandomMoviePage() (movieURL string) {
 	rand.Seed(time.Now().UnixNano())
 	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[rand.Intn(8)])
 
 	document := fetchPage(startURL)
 
 	movieLinks := make([]string, 0)
-	for _, node := range querySelectorAll(document, "i") {
-		link, err := extractLink(node)
-			if err == nil {
-				movieLinks = append(movieLinks, link)
-			}
-	}
+	document.Find("i > a").Each(func(i int, element *goquery.Selection) {
+		href, _ := element.Attr("href")
+		findRedlink := regexp.MustCompile("redlink=1")
+		if !findRedlink.MatchString(href) {
+			movieLinks = append(movieLinks, href)
+		}
+	})
 
 	randomLink := fmt.Sprintf("%s", movieLinks[rand.Intn(len(movieLinks))])
-	moviePage = fetchPage("https://en.wikiquote.org" + randomLink)
+	movieURL = "https://en.wikiquote.org" + randomLink
 	return
 }
 
-// Extracts the "href" attribute of the first a-tag child it finds within a given container node.
-// This function assumes every node it checks to have only one child.
-// Siblings do not get checked.
-func extractLink(node *html.Node) (string, error) {
-	// TODO: Make use of querySelector for this, as it does most of what this function does as well.
-	if node.Type == html.ElementNode && node.Data == "a" {
-		for _, a := range node.Attr {
-			if a.Key == "href" {
-				findRedlink := regexp.MustCompile("redlink=1")
-				if findRedlink.MatchString(a.Val) {
-					return "", errors.New("Found link was a red link")
-				}
-				return a.Val, nil
-			}
-		}
-	}
-	if node.FirstChild == nil {
-		return "", errors.New("No link found")
-	}
-	return extractLink(node.FirstChild)
-}
-
 // Takes a URL and returns the fetched page as *html.Node.
-func fetchPage(URL string) (page *html.Node) {
+func fetchPage(URL string) (document *goquery.Document) {
 	res, err := http.Get(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	page, err = html.Parse(res.Body)
+	document, err = goquery.NewDocumentFromReader(res.Body)
 	res.Body.Close()
 	if err != nil {
 		log.Fatal(err)

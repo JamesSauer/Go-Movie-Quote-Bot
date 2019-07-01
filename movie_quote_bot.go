@@ -23,9 +23,11 @@ BONUS:
 */
 
 func main() {
-	quotes, characters, title := scrapeQuotes(getRandomMoviePage())
+	url := getRandomMoviePage()
+	fmt.Println(url)
+	quotes, characters, title := scrapeQuotes(url)
 	for len(quotes) == 0 {
-		quotes, characters, title = scrapeQuotes(getRandomMoviePage())
+		quotes, characters, title = scrapeQuotes(url)
 	}
 	q := quotes[rand.Intn(len(quotes))]
 	fmt.Printf("%s\n    - %s, %s", q.text, characters[q.character], title)
