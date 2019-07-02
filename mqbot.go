@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"time"
 )
 
 /* TODO:
@@ -23,9 +25,24 @@ BONUS:
 */
 
 func main() {
-	quotes, characters, title := scrapeQuotes(getRandomMoviePage())
+	if len(os.Args) <= 1 {
+		printRandomQuote()
+	} else {
+		switch os.Args[1] {
+		case "test":
+			fmt.Println("Nope! Chuck Testa!")
+		default:
+			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
+			printRandomQuote()
+		}
+	}
+}
+
+func printRandomQuote() {
+	rand.Seed(time.Now().UnixNano())
+	quotes, characters, title := scrapeQuotes(getRandomURL())
 	for len(quotes) == 0 {
-		quotes, characters, title = scrapeQuotes(getRandomMoviePage())
+		quotes, characters, title = scrapeQuotes(getRandomURL())
 	}
 	q := quotes[rand.Intn(len(quotes))]
 	fmt.Printf("%s\n    - %s, %s", q.text, characters[q.character], title)

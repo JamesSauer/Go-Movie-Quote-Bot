@@ -5,7 +5,7 @@
 
 ```
 $ go install
-$ movie_quote_bot
+$ mqbot
 That's part of your problem: you haven't seen enough movies. All of life's riddles are answered in the movies.
     - Davis, Grand Canyon (1991 film)
 ```
