@@ -72,14 +72,15 @@ func getFirstElementChild(node *html.Node) (firstChild *html.Node) {
 	return nil
 }
 
-var nonCharacterHeadings = [7]string{
+var nonCharacterHeadings = [8]string{
+	"About",
+	"Cast",
 	"Contents",
 	"Dialogue",
-	"Cast",
 	"External links",
 	"Navigation menu",
-	"Taglines",
 	"See also",
+	"Taglines",
 }
 
 func isCharacter(title string) bool {

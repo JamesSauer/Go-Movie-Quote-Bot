@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// The list of movies on wikiquote is split up into these parts:
 var listParts = [8]string{
 	// Note how these are not regular dashes ("-"), but longer ones ("–").
 	"A–C",
@@ -23,14 +24,19 @@ var listParts = [8]string{
 	"W–Z",
 }
 
-// Returns a random WikiQuotes.org page about a movie as *html.Node.
-func getRandomMoviePage() (moviePage *html.Node) {
-	rand.Seed(time.Now().UnixNano())
-	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[rand.Intn(8)])
+// Returns a slice of relative WikiQuote.org URLs to pages about movies.
+func getURLListFromPart(i int) (movieLinks []string) {
+	// Make sure i is in range:
+	if i < 0 {
+		i = i * -1
+	}
+	i = i % len(listParts)
+
+	startURL := fmt.Sprintf("https://en.wikiquote.org/wiki/List_of_films_(%s)", listParts[i])
 
 	document := fetchPage(startURL)
 
-	movieLinks := make([]string, 0)
+	movieLinks = make([]string, 0)
 	for _, node := range querySelectorAll(document, "i") {
 		link, err := extractLink(node)
 			if err == nil {
@@ -38,7 +44,23 @@ func getRandomMoviePage() (moviePage *html.Node) {
 			}
 	}
 
-	randomLink := fmt.Sprintf("%s", movieLinks[rand.Intn(len(movieLinks))])
+	return
+}
+
+func getAllURLs() (movieLinks []string) {
+	movieLinks = make([]string, 0)
+	for i := range listParts {
+		movieLinks = append(movieLinks, getURLListFromPart(i)...)
+	}
+	return
+}
+
+// Returns a random page from a slice of relative WikiQuote.org URLs as *html.Node.
+func getRandomMoviePage() (moviePage *html.Node) {
+	rand.Seed(time.Now().UnixNano())
+	URLList := getURLListFromPart(rand.Intn(len(listParts)))
+
+	randomLink := fmt.Sprintf("%s", URLList[rand.Intn(len(URLList))])
 	moviePage = fetchPage("https://en.wikiquote.org" + randomLink)
 	return
 }
