@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -24,6 +25,8 @@ BONUS:
 - Look into making the code more idiomatic. Start here: https://golang.org/doc/effective_go.html
 */
 
+var db *sql.DB
+
 func main() {
 	if len(os.Args) <= 1 {
 		printRandomQuote()
@@ -31,6 +34,10 @@ func main() {
 		switch os.Args[1] {
 		case "test":
 			fmt.Println("Nope! Chuck Testa!")
+		case "testdb":
+			db = connectPostgres()
+			defer db.Close()
+			executeSchema()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
 			printRandomQuote()

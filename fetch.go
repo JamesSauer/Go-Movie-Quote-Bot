@@ -8,12 +8,22 @@ import (
 
 // Takes a URL and returns the fetched page as *html.Node.
 func fetch(URL string) (page *html.Node) {
-	res, err := http.Get(URL)
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	req.Header.Set("User-Agent", "MovieQuoteBot https://github.com/JamesSauer/Go-Movie-Quote-Bot")
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
 	page, err = html.Parse(res.Body)
-	res.Body.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
