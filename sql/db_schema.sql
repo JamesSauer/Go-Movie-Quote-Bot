@@ -7,11 +7,10 @@ CREATE TABLE characters (
 );
 
 CREATE TABLE movies (
-	id UUID DEFAULT gen_random_uuid(),
 	title VARCHAR(128),
 	wikiquote_url varchar(128),
 	last_scraped TIMESTAMP (0) DEFAULT now(),
-	PRIMARY KEY(id)
+	PRIMARY KEY(wikiquote_url)
 );
 
 CREATE TABLE quotes (

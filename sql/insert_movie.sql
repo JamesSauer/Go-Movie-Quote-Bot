@@ -1,0 +1,1 @@
+INSERT INTO movies(title, wikiquote_url) VALUES($1, $2);

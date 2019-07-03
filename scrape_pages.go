@@ -1,10 +1,5 @@
 package main
 
-type quote struct{
-	text string
-	character int
-}
-
 // Takes a wikiquote URL to a movie page and returns a slice of quotes,
 // a slice of characters the quotes are attributed to as well as the title of the movie.
 func scrapeQuotes(movieURL string) (quotes []quote, characters []string, title string) {

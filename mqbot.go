@@ -37,7 +37,12 @@ func main() {
 		case "testdb":
 			db = connectPostgres()
 			defer db.Close()
-			executeSchema()
+
+			myMovie := movie{
+				title: "Good Will Hunting",
+				wikiquoteURL: "/wiki/Good_Will_Hunting",
+			}
+			myMovie.save()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
 			printRandomQuote()
