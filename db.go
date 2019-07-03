@@ -3,13 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
+	// "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"regexp"
+	// "strings"
 )
 
 var (
+	db *sql.DB
 	connectStr = "postgres://postgres:abc123@localhost:5432/mqbot_dev?sslmode=disable"
 	sqlDirName = "sql"
 	sqlStatements map[string]string // Gets populated after connection to Postgres is established.
@@ -19,16 +21,24 @@ type movie struct{
 	title, wikiquoteURL string
 }
 
-type quote struct{
-	text string
-	character int
+func (movie *movie) save() {
+	_, err := db.Exec(sqlStatements["insert_movie"], movie.title, movie.wikiquoteURL)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
-// type quote2 struct{
-// 	movie, author, body string
-// }
+type character struct{
+	name string
+}
 
-func connectPostgres() *sql.DB {
+type quote struct{
+	movie *movie
+	author *character
+	body string
+}
+
+func connectPostgres() {
 	defer loadSQL()
 
 	db, err := sql.Open("postgres", connectStr)
@@ -41,8 +51,6 @@ func connectPostgres() *sql.DB {
 	  panic(err)
 	}
 	fmt.Println("Successfully connected!")
-
-	return db
 }
 
 // Loads all .sql files from the sql directory and puts them in a global map.
@@ -75,10 +83,12 @@ func loadSQL() {
 }
 
 func executeSchema() {
+	if db == nil {
+		connectPostgres()
+		defer db.Close()
+	}
 	schema := sqlStatements["db_schema"]
 	statements := regexp.MustCompile(`;\s*`).Split(schema, -1)
-
-	db := connectPostgres()
 
 	for _, statement := range statements {
 		_, err := db.Exec(statement)
@@ -88,9 +98,49 @@ func executeSchema() {
 	}
 }
 
-func (movie *movie) save() {
-	_, err := db.Exec(sqlStatements["insert_movie"], movie.title, movie.wikiquoteURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+// TODO: Make it work with atomic queries first. Ignore the below and worry about optimization later.
+
+// func insertMovieAndCharacters(film *movie, characters []*character) {
+// 	names := make([]string, 0)
+// 	for _, char := range characters {
+// 		names = append(names, char.name)
+// 	}
+// 	rows, err := db.Query(sqlStatements["insert_movie_and_characters"], film.wikiquoteURL, film.title, pgArrayLiteral(names))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer rows.Close()
+
+
+// }
+
+// func pgArrayLiteral(slice []string) string {
+// 	return "{'" + strings.Join(slice, "','") + "'}"
+// }
+
+// func insertQuoteBatch(batch []*quote) {
+// 	txn, err := db.Begin()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	stmt, _ := txn.Prepare(pq.CopyIn("quotes", "movie", "author", "body"))
+
+// 	for _, quote := range batch {
+// 		_, err := stmt.Exec(quote.movie, quote.author, quote.body)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 	}
+// 	_, err = stmt.Exec()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	err = stmt.Close()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	err = txn.Commit()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }

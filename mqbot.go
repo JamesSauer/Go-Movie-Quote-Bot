@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -25,8 +24,6 @@ BONUS:
 - Look into making the code more idiomatic. Start here: https://golang.org/doc/effective_go.html
 */
 
-var db *sql.DB
-
 func main() {
 	if len(os.Args) <= 1 {
 		printRandomQuote()
@@ -35,14 +32,8 @@ func main() {
 		case "test":
 			fmt.Println("Nope! Chuck Testa!")
 		case "testdb":
-			db = connectPostgres()
+			connectPostgres()
 			defer db.Close()
-
-			myMovie := movie{
-				title: "Good Will Hunting",
-				wikiquoteURL: "/wiki/Good_Will_Hunting",
-			}
-			myMovie.save()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
 			printRandomQuote()
@@ -52,10 +43,10 @@ func main() {
 
 func printRandomQuote() {
 	rand.Seed(time.Now().UnixNano())
-	quotes, characters, title := scrapeQuotes(getRandomURL())
+	quotes, _, _ := scrapeQuotes(getRandomURL())
 	for len(quotes) == 0 {
-		quotes, characters, title = scrapeQuotes(getRandomURL())
+		quotes, _, _ = scrapeQuotes(getRandomURL())
 	}
 	q := quotes[rand.Intn(len(quotes))]
-	fmt.Printf("%s\n    - %s, %s", q.text, characters[q.character], title)
+	fmt.Printf("%s\n    - %s, %s", q.body, q.author.name, q.movie.title)
 }

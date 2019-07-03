@@ -1,0 +1,1 @@
+-- Don't worry about optimization just yet. Use atomic queries.
