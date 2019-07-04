@@ -6,15 +6,15 @@ import(
 
 // Takes a wikiquote URL to a movie page and returns a slice of quotes,
 // a slice of characters the quotes are attributed to as well as the title of the movie.
-func scrapeQuotes(movieURL string) (quotes []*quote, characters []*character, film *movie) {
+func scrapeQuotes(movieURL string) (quotes []*Quote, characters []*Character, movie *Movie) {
 	document := fetch(movieURL)
-	film = &movie{
+	movie = &Movie{
 		wikiquoteURL: regexp.MustCompile(`\.org(.+)`).FindStringSubmatch(movieURL)[1],
 		title: extractText(querySelectorAll(document, "#firstHeading")[0]),
 	}
 
-	quotes = make([]*quote, 0)
-	characters = make([]*character, 0)
+	characters = make([]*Character, 0)
+	quotes = make([]*Quote, 0)
 	
 	headings := querySelectorAll(document, ".mw-headline")
 	
@@ -23,13 +23,13 @@ func scrapeQuotes(movieURL string) (quotes []*quote, characters []*character, fi
 		if !isCharacter(char) {
 			continue
 		}
-		characters = append(characters, &character{name: char})
+		characters = append(characters, &Character{name: char})
 
 		ul := getNextElementSibling(heading.Parent)
 		items := querySelectorAll(ul, "li")
 
 		for _, item := range items {
-			q := &quote{body: extractText(item), movie: film, author: characters[len(characters)-1]}
+			q := &Quote{body: extractText(item), movie: movie, author: characters[len(characters)-1]}
 			quotes = append(quotes, q)
 		}
 	}

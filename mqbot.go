@@ -26,7 +26,7 @@ BONUS:
 
 func main() {
 	if len(os.Args) <= 1 {
-		printRandomQuote()
+		getRandomQuote().print()
 	} else {
 		switch os.Args[1] {
 		case "test":
@@ -34,19 +34,25 @@ func main() {
 		case "testdb":
 			connectPostgres()
 			defer db.Close()
+		case "save1":
+			connectPostgres()
+			defer db.Close()
+
+			q := getRandomQuote()
+			q.saveFull()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
-			printRandomQuote()
+			getRandomQuote().print()
 		}
 	}
 }
 
-func printRandomQuote() {
+func getRandomQuote() (q *Quote) {
 	rand.Seed(time.Now().UnixNano())
 	quotes, _, _ := scrapeQuotes(getRandomURL())
 	for len(quotes) == 0 {
 		quotes, _, _ = scrapeQuotes(getRandomURL())
 	}
-	q := quotes[rand.Intn(len(quotes))]
-	fmt.Printf("%s\n    - %s, %s", q.body, q.author.name, q.movie.title)
+	q = quotes[rand.Intn(len(quotes))]
+	return
 }

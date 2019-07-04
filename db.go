@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	// "github.com/lib/pq"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -17,34 +17,14 @@ var (
 	sqlStatements map[string]string // Gets populated after connection to Postgres is established.
 )
 
-type movie struct{
-	title, wikiquoteURL string
-}
-
-func (movie *movie) save() {
-	_, err := db.Exec(sqlStatements["insert_movie"], movie.title, movie.wikiquoteURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-type character struct{
-	name string
-}
-
-type quote struct{
-	movie *movie
-	author *character
-	body string
-}
-
 func connectPostgres() {
 	defer loadSQL()
 
-	db, err := sql.Open("postgres", connectStr)
+	connection, err := sql.Open("postgres", connectStr)
 	if err != nil {
 		panic(err)
 	}
+	db = connection
 
 	err = db.Ping()
 	if err != nil {
