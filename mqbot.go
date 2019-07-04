@@ -38,8 +38,12 @@ func main() {
 			connectPostgres()
 			defer db.Close()
 
-			q := getRandomQuote()
-			q.saveFull()
+			getRandomQuote().saveFull()
+		case "save1page":
+			connectPostgres()
+			defer db.Close()
+
+			getRandomPage().save()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
 			getRandomQuote().print()
@@ -47,12 +51,18 @@ func main() {
 	}
 }
 
-func getRandomQuote() (q *Quote) {
+func getRandomPage() (page *Page) {
 	rand.Seed(time.Now().UnixNano())
-	quotes, _, _ := scrapeQuotes(getRandomURL())
-	for len(quotes) == 0 {
-		quotes, _, _ = scrapeQuotes(getRandomURL())
+	page = scrapePage(getRandomURL())
+	for len(page.quotes) == 0 {
+		page = scrapePage(getRandomURL())
 	}
-	q = quotes[rand.Intn(len(quotes))]
+	return
+}
+
+func getRandomQuote() (quote *Quote) {
+	page := getRandomPage()
+	rand.Seed(time.Now().UnixNano())
+	quote = page.quotes[rand.Intn(len(page.quotes))]
 	return
 }
