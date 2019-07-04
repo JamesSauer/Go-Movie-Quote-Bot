@@ -2,35 +2,38 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"regexp"
+	"os"
 	// "strings"
 )
 
 var (
 	db *sql.DB
-	connectStr = "postgres://postgres:abc123@localhost:5432/mqbot_dev?sslmode=disable"
-	sqlDirName = "sql"
+	connectStr  = os.Getenv("MQBOT_POSTGRES")
+	fallbackStr = "postgres://postgres:abc123@localhost:5432/mqbot_dev?sslmode=disable"
+	sqlDirName  = "sql"
 	sqlStatements map[string]string // Gets populated after connection to Postgres is established.
 )
 
-func connectPostgres() {
+func connectPostgres() (connection *sql.DB, err error) {
 	defer loadSQL()
-
-	connection, err := sql.Open("postgres", connectStr)
-	if err != nil {
-		panic(err)
+	if connectStr == "" {
+		connectStr = fallbackStr
 	}
-	db = connection
 
-	err = db.Ping()
+	connection, err = sql.Open("postgres", connectStr)
 	if err != nil {
-	  panic(err)
+		return
 	}
-	fmt.Println("Successfully connected!")
+
+	err = connection.Ping()
+	if err != nil {
+		return
+	}
+	return
 }
 
 // Loads all .sql files from the sql directory and puts them in a global map.
@@ -73,7 +76,7 @@ func executeSchema() {
 	for _, statement := range statements {
 		_, err := db.Exec(statement)
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 	}
 }

@@ -6,8 +6,11 @@ import(
 
 // Takes a wikiquote URL to a movie page and returns a slice of quotes,
 // a slice of characters the quotes are attributed to as well as the title of the movie.
-func scrapePage(movieURL string) (page *Page) {
-	document := fetch(movieURL)
+func scrapePage(movieURL string) (page *Page, err error) {
+	document, err := fetch(movieURL)
+	if err != nil {
+		return
+	}
 	movie := &Movie{
 		wikiquoteURL: regexp.MustCompile(`\.org(.+)`).FindStringSubmatch(movieURL)[1],
 		title: extractText(querySelectorAll(document, "#firstHeading")[0]),

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -27,46 +28,79 @@ BONUS:
 
 func main() {
 	if len(os.Args) <= 1 {
-		getRandomQuote().print()
+		printRandom(getRandomQuote)
 	} else {
 		switch os.Args[1] {
 		case "test":
 			fmt.Println("Nope! Chuck Testa!")
 		case "testdb":
-			connectPostgres()
-			defer db.Close()
-		case "save1":
-			connectPostgres()
-			defer db.Close()
-
-			getRandomQuoteFresh().saveFull()
-		case "save1page":
-			connectPostgres()
-			defer db.Close()
-
-			getRandomPage().save()
-		case "random":
-			connectPostgres()
-			defer db.Close()
-
-			getRandomQuote().print()
+			db, err := connectPostgres()
+			if err != nil {
+				log.Fatalln(errors.New("Could not connect to DB. Please ensure the MQBOT_POSTGRES environment variable is set correctly"))
+			}
+			fmt.Println("Successfully connected to DB!")
+			db.Close()
+		// Force scraping a fresh quote:
+		case "--fresh":
+			printRandom(getRandomQuoteFresh)
+		case "-f":
+			printRandom(getRandomQuoteFresh)
+		// Force retrieving a quote from the database:
+		case "--database":
+			printRandom(getRandomQuoteDB)
+		case "-db":
+			printRandom(getRandomQuoteDB)
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
-			getRandomQuoteFresh().print()
+			printRandom(getRandomQuote)
 		}
 	}
 }
 
-func getRandomPage() (page *Page) {
+// Attempts to scrape a random movie page from Wikiquote.
+func getRandomPage() (page *Page, err error) {
 	rand.Seed(time.Now().UnixNano())
-	page = scrapePage(getRandomURL())
+	url, err := getRandomURL()
+	if err != nil {
+		return
+	}
+
+	page, err = scrapePage(url)
+	if err != nil {
+		return
+	}
 	for len(page.quotes) == 0 {
-		page = scrapePage(getRandomURL())
+		page, err = scrapePage(url)
+		if err != nil {
+			return
+		}
 	}
 	return
 }
 
-func getRandomQuote() (quote *Quote) {
+// Attempts to retrieve a random quote from the database.
+// If it fails, fetch a fresh one from Wikiquote instead.
+// This is the default behaviour.
+func getRandomQuote() (quote *Quote, err error) {
+	quote, err = getRandomQuoteDB()
+	if err != nil {
+		quote, err = getRandomQuoteFresh()
+		if err != nil {
+			return nil, errors.New("Couldn't retrieve a quote from either the database or Wikiquote")
+		}
+		return
+	}
+	return
+}
+
+// Attempts to retrieve a random quote from the database.
+func getRandomQuoteDB() (quote *Quote, err error) {
+	db, err := connectPostgres()
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
 	var (
 		body string
 		author string
@@ -74,9 +108,9 @@ func getRandomQuote() (quote *Quote) {
 		wikiquote_url string
 	)
 	row := db.QueryRow(sqlStatements["select_random_quote"])
-	err := row.Scan(&body, &author, &title)
+	err = row.Scan(&body, &author, &title)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 	movie := &Movie{
 		title: title,
@@ -93,9 +127,22 @@ func getRandomQuote() (quote *Quote) {
 	return
 }
 
-func getRandomQuoteFresh() (quote *Quote) {
-	page := getRandomPage()
+// Attempts to scrape Wikiquote for a random quote.
+func getRandomQuoteFresh() (quote *Quote, err error) {
+	page, err := getRandomPage()
+	if err != nil {
+		return
+	}
 	rand.Seed(time.Now().UnixNano())
 	quote = page.quotes[rand.Intn(len(page.quotes))]
 	return
+}
+
+// Wrapper for the getRandomQuote...() functions to handle errors.
+func printRandom(fn func() (*Quote, error)) {
+	q, err := fn()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	q.print()
 }
