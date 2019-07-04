@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -38,15 +39,20 @@ func main() {
 			connectPostgres()
 			defer db.Close()
 
-			getRandomQuote().saveFull()
+			getRandomQuoteFresh().saveFull()
 		case "save1page":
 			connectPostgres()
 			defer db.Close()
 
 			getRandomPage().save()
+		case "random":
+			connectPostgres()
+			defer db.Close()
+
+			getRandomQuote().print()
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
-			getRandomQuote().print()
+			getRandomQuoteFresh().print()
 		}
 	}
 }
@@ -61,6 +67,33 @@ func getRandomPage() (page *Page) {
 }
 
 func getRandomQuote() (quote *Quote) {
+	var (
+		body string
+		author string
+		title string
+		wikiquote_url string
+	)
+	row := db.QueryRow(sqlStatements["select_random_quote"])
+	err := row.Scan(&body, &author, &title)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	movie := &Movie{
+		title: title,
+		wikiquoteURL: wikiquote_url,
+	}
+	char := &Character{
+		name: author,
+	}
+	quote = &Quote{
+		movie: movie,
+		author: char,
+		body: body,
+	}
+	return
+}
+
+func getRandomQuoteFresh() (quote *Quote) {
 	page := getRandomPage()
 	rand.Seed(time.Now().UnixNano())
 	quote = page.quotes[rand.Intn(len(page.quotes))]
