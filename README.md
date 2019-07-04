@@ -11,7 +11,7 @@ $ mqbot
 >     - Davis, Grand Canyon (1991 film)
 ```
 
-# Usag
+# Usage
 By default, mqbot attempts to retrieve a quote from the database before scraping Wikiquote.
 To force scraping a fresh quote, use the --fresh or -f flag:
 ```
