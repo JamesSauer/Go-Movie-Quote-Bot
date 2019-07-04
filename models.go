@@ -13,16 +13,19 @@ type Page struct{
 	quotes []*Quote
 }
 
-func (page *Page) save() {
-	page.movie.save()
+func (page *Page) save() (err error) {
+	err = page.movie.save()
 
 	for _, char := range page.characters {
-		char.save()
+		err = char.save()
 	}
 
 	for _, quote := range page.quotes {
-		quote.save()
+		err = quote.save()
 	}
+	
+	// Returning just the last error that occured is sufficient for now.
+	return
 }
 
 // Movie ...
@@ -57,10 +60,12 @@ func (q *Quote) save() (err error) {
 	return
 }
 
-func (q *Quote) saveFull() {
-	q.author.save()
-	q.movie.save()
-	q.save()
+func (q *Quote) saveFull() (err error) {
+	err = q.author.save()
+	err = q.movie.save()
+	err = q.save()
+	// Returning just the last error that occured is sufficient for now.
+	return
 }
 
 func (q *Quote) print() {
