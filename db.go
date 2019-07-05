@@ -20,6 +20,7 @@ var (
 
 func connectPostgres() (connection *sql.DB, err error) {
 	defer loadSQL()
+
 	if connectStr == "" {
 		connectStr = fallbackStr
 	}
@@ -56,7 +57,7 @@ func loadSQL() {
 		if extension == "sql" {
 			var sqlFileContent, err = ioutil.ReadFile(sqlDirName + "/" + f.Name())
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalln(err)
 			}
 
 			sqlStatements[name] = string(sqlFileContent)
@@ -66,10 +67,15 @@ func loadSQL() {
 }
 
 func executeSchema() {
+	var err error
 	if db == nil {
-		connectPostgres()
+		db, err = connectPostgres()
 		defer db.Close()
 	}
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	schema := sqlStatements["db_schema"]
 	statements := regexp.MustCompile(`;\s*`).Split(schema, -1)
 

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"regexp"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -40,17 +43,14 @@ func main() {
 			fmt.Println("Successfully connected to DB!")
 			db.Close()
 		// Force scraping a fresh quote:
-		case "--fresh":
-			printRandom(getRandomQuoteFresh)
-		case "-f":
+		case "--fresh", "-f":
 			printRandom(getRandomQuoteFresh)
 		// Force retrieving a quote from the database:
-		case "--database":
+		case "--database", "-db":
 			printRandom(getRandomQuoteDB)
-		case "-db":
-			printRandom(getRandomQuoteDB)
+		// Scrape one page at random:
 		case "scrape1page":
-			page, err := getRandomPage()
+			page, err := scrapeRandomPage()
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -59,6 +59,7 @@ func main() {
 			if err != nil {
 				log.Fatalln(err)
 			}
+			defer db.Close()
 
 			err = page.save()
 			if err != nil {
@@ -66,7 +67,25 @@ func main() {
 			}
 
 			fmt.Printf("Successfully scraped and saved the entry for the movie \"%s\"!\n", page.movie.title)
+		// Scrape ALL the pages:
+		case "scrapeall":
+			warning := "This command will attempt to scrape the entirety of wikiquote.org's movie quotes.\n"+
+				"This will take more than 10 minutes."
 
+			if confirm(warning) {
+				var err error
+				db, err = connectPostgres()
+				if err != nil {
+					log.Fatalln(err)
+				}
+				numPages, elapsedTime, err := scrapeAll()
+				fmt.Printf("\rScraped %d pages in %s!\n", numPages, elapsedTime)
+				if err != nil {
+					log.Fatal(err)
+				}
+				return
+			}
+			return
 		// Using unknown flags or subcommands defaults to behaviour without flags or subcommands:
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
@@ -75,8 +94,39 @@ func main() {
 	}
 }
 
+func confirm(warning string) (confirmed bool) {
+	fmt.Println(warning + "\n\nDo you want to proceed? (yes/y/no/n)")
+
+	findWords := regexp.MustCompile(`^((?i)yes|y|no|n)\s`)
+	keepAsking := true
+
+	for keepAsking {
+		reader := bufio.NewReader(os.Stdin)
+		input, _ := reader.ReadString('\n')
+		match := findWords.FindStringSubmatch(input)
+		if len(match) == 2 {
+			input = strings.ToLower(match[1])
+		}
+
+		switch input {
+		case "yes", "y":
+			confirmed  = true
+			keepAsking = false
+			return
+		case "no", "n":
+			confirmed  = false
+			keepAsking = false
+			return
+		default:
+			fmt.Println("You have to type yes, y, no or n.")
+			continue
+		}
+	}
+	return 
+}
+
 // Attempts to scrape a random movie page from Wikiquote.
-func getRandomPage() (page *Page, err error) {
+func scrapeRandomPage() (page *Page, err error) {
 	rand.Seed(time.Now().UnixNano())
 	url, err := getRandomURL()
 	if err != nil {
@@ -126,7 +176,7 @@ func getRandomQuoteDB() (quote *Quote, err error) {
 		wikiquote_url string
 	)
 	row := db.QueryRow(sqlStatements["select_random_quote"])
-	err = row.Scan(&body, &author, &title)
+	err = row.Scan(&body, &author, &title, &wikiquote_url)
 	if err != nil {
 		return
 	}
@@ -147,7 +197,7 @@ func getRandomQuoteDB() (quote *Quote, err error) {
 
 // Attempts to scrape Wikiquote for a random quote.
 func getRandomQuoteFresh() (quote *Quote, err error) {
-	page, err := getRandomPage()
+	page, err := scrapeRandomPage()
 	if err != nil {
 		return
 	}
