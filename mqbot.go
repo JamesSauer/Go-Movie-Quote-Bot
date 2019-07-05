@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"regexp"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
 
 /* TODO:
 - Fix TODOs tied to specific code snippets before tackling the ones below.
-- Use gofmt.
 - Replace the functions in the dom.go file with goquery. https://github.com/PuerkitoBio/goquery
 - Make the scraping more robust by considering edge cases.
   (E.g. quotes following the "Others" heading, where the name of the character appears before the quote.)
@@ -49,7 +48,7 @@ func main() {
 		case "--database", "-db":
 			printRandom(getRandomQuoteDB)
 		// Scrape one page at random:
-		case "scrape1page":
+		case "scrape1":
 			page, err := scrapeRandomPage()
 			if err != nil {
 				log.Fatalln(err)
@@ -69,7 +68,7 @@ func main() {
 			fmt.Printf("Successfully scraped and saved the entry for the movie \"%s\"!\n", page.movie.title)
 		// Scrape ALL the pages:
 		case "scrapeall":
-			warning := "This command will attempt to scrape the entirety of wikiquote.org's movie quotes.\n"+
+			warning := "This command will attempt to scrape the entirety of wikiquote.org's movie quotes.\n" +
 				"This will take more than 10 minutes."
 
 			if confirm(warning) {
@@ -110,11 +109,11 @@ func confirm(warning string) (confirmed bool) {
 
 		switch input {
 		case "yes", "y":
-			confirmed  = true
+			confirmed = true
 			keepAsking = false
 			return
 		case "no", "n":
-			confirmed  = false
+			confirmed = false
 			keepAsking = false
 			return
 		default:
@@ -122,7 +121,7 @@ func confirm(warning string) (confirmed bool) {
 			continue
 		}
 	}
-	return 
+	return
 }
 
 // Attempts to scrape a random movie page from Wikiquote.
@@ -170,9 +169,9 @@ func getRandomQuoteDB() (quote *Quote, err error) {
 	defer db.Close()
 
 	var (
-		body string
-		author string
-		title string
+		body          string
+		author        string
+		title         string
 		wikiquote_url string
 	)
 	row := db.QueryRow(sqlStatements["select_random_quote"])
@@ -181,16 +180,16 @@ func getRandomQuoteDB() (quote *Quote, err error) {
 		return
 	}
 	movie := &Movie{
-		title: title,
+		title:        title,
 		wikiquoteURL: wikiquote_url,
 	}
 	char := &Character{
 		name: author,
 	}
 	quote = &Quote{
-		movie: movie,
+		movie:  movie,
 		author: char,
-		body: body,
+		body:   body,
 	}
 	return
 }

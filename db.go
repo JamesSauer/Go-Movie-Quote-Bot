@@ -5,16 +5,16 @@ import (
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
-	"regexp"
 	"os"
+	"regexp"
 	// "strings"
 )
 
 var (
-	db *sql.DB
-	connectStr  = os.Getenv("MQBOT_POSTGRES")
-	fallbackStr = "postgres://postgres:abc123@localhost:5432/mqbot_dev?sslmode=disable"
-	sqlDirName  = "sql"
+	db            *sql.DB
+	connectStr    = os.Getenv("MQBOT_POSTGRES")
+	fallbackStr   = "postgres://postgres:abc123@localhost:5432/mqbot_dev?sslmode=disable"
+	sqlDirName    = "sql"
 	sqlStatements map[string]string // Gets populated after connection to Postgres is established.
 )
 
@@ -99,7 +99,6 @@ func executeSchema() {
 // 		log.Fatal(err)
 // 	}
 // 	defer rows.Close()
-
 
 // }
 

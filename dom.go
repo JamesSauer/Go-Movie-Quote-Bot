@@ -6,9 +6,8 @@ import (
 	"regexp"
 )
 
-
 /* TODO: Look into using goquery to replace the functions in this file. https://github.com/PuerkitoBio/goquery
-*/
+ */
 
 // A helper for use in the querySelector functions.
 // It returns a function that tests for either a specific id, class or tag name depending on selector.
@@ -55,7 +54,6 @@ func getTest(selector string) func(*html.Node) bool {
 		}
 	}
 }
-
 
 func querySelectorAll(root *html.Node, selector string) (nodeList []*html.Node) {
 	test := getTest(selector)

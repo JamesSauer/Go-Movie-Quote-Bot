@@ -37,9 +37,9 @@ func getURLListFromPart(i int) (movieLinks []string, err error) {
 	movieLinks = make([]string, 0)
 	for _, node := range querySelectorAll(document, "i") {
 		link, err := extractLink(node)
-			if err == nil {
-				movieLinks = append(movieLinks, link)
-			}
+		if err == nil {
+			movieLinks = append(movieLinks, link)
+		}
 	}
 
 	return

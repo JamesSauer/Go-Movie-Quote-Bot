@@ -12,7 +12,7 @@ $ mqbot
 >     - Davis, Grand Canyon (1991 film)
 ```
 
-By default, mqbot attempts to retrieve a quote from the database before scraping Wikiquote.
+By default, mqbot attempts to retrieve a quote from the database before scraping Wikiquote.   
 It checks the MQBOT_POSTGRES environment variable for a connection string.
 
 To force scraping a fresh quote, use the --fresh or -f flag:
@@ -35,13 +35,13 @@ $ mqbot testdb
 
 To scrape a random movie entry and persist all its quotes to the database:
 ```
-$ mqbot scrape1page
+$ mqbot scrape1
 > Successfully scraped and saved the entry for the movie "Angels with Dirty Faces"!
 ```
 
-To scrape ALL movie entries:
-**Note: The bot currently doesn't check whether or not a quote already exists within the database.**
-**Using this command more than once will result in duplicate database entries.**
+To scrape ALL movie entries:   
+*Note: The bot currently doesn't check whether or not a quote already exists within the database.*   
+*Using this command more than once will result in duplicate database entries.*
 ```
 $ mqbot scrapeall
 > This command will attempt to scrape the entirety of wikiquote.org's movie quotes.

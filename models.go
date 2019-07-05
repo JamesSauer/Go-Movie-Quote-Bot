@@ -7,10 +7,10 @@ import (
 // TODO: Make the save() methods in this file return errors instead of terminating the program.
 
 // Page ...
-type Page struct{
-	movie *Movie
+type Page struct {
+	movie      *Movie
 	characters []*Character
-	quotes []*Quote
+	quotes     []*Quote
 }
 
 func (page *Page) save() (err error) {
@@ -23,13 +23,13 @@ func (page *Page) save() (err error) {
 	for _, quote := range page.quotes {
 		err = quote.save()
 	}
-	
+
 	// Returning just the last error that occured is sufficient for now.
 	return
 }
 
 // Movie ...
-type Movie struct{
+type Movie struct {
 	title, wikiquoteURL string
 }
 
@@ -39,7 +39,7 @@ func (movie *Movie) save() (err error) {
 }
 
 // Character ...
-type Character struct{
+type Character struct {
 	name string
 }
 
@@ -49,10 +49,10 @@ func (char *Character) save() (err error) {
 }
 
 // Quote ...
-type Quote struct{
-	movie *Movie
+type Quote struct {
+	movie  *Movie
 	author *Character
-	body string
+	body   string
 }
 
 func (q *Quote) save() (err error) {

@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"errors"
 	"fmt"
 	"math"
@@ -17,14 +17,14 @@ func scrapePage(movieURL string) (page *Page, err error) {
 	}
 	movie := &Movie{
 		wikiquoteURL: regexp.MustCompile(`\.org(.+)`).FindStringSubmatch(movieURL)[1],
-		title: extractText(querySelectorAll(document, "#firstHeading")[0]),
+		title:        extractText(querySelectorAll(document, "#firstHeading")[0]),
 	}
 
 	characters := make([]*Character, 0)
 	quotes := make([]*Quote, 0)
-	
+
 	headings := querySelectorAll(document, ".mw-headline")
-	
+
 	for _, heading := range headings {
 		char := extractText(heading)
 		if !isCharacter(char) {
