@@ -11,7 +11,7 @@ $ cd $GOPATH/src/github.com/JamesSauer/Go-Movie-Quote-Bot
 $ go install
 $ mqbot
 > That's part of your problem: you haven't seen enough movies. All of life's riddles are answered in the movies.
->     - Davis, Grand Canyon (1991 film)
+>   - Davis, Grand Canyon (1991 film)
 ```
 
 By default, mqbot attempts to retrieve a quote from the database before scraping Wikiquote.   
@@ -54,4 +54,10 @@ $ mqbot scrapeall
 > This might take more than 10 minutes. Do you want to proceed? (yes/y/no/n)
 $ yes
 > Scraped 2378 pages in 12m10.7716143s!
+```
+
+To check some stats:
+```
+$ mqbot stats
+> MQBot has collected and stored 24809 quotes from 6281 characters and 2377 movies this far.
 ```

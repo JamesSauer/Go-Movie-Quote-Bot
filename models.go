@@ -85,11 +85,11 @@ func getStats() (stats map[string]int, err error) {
 	}
 
 	stats = make(map[string]int)
+	var (
+		stat string
+		value int
+	)
 	for result.Next() {
-		var (
-			stat string
-			value int
-		)
 		result.Scan(&stat, &value)
 		stats[stat] = value
 	}
