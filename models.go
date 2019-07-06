@@ -69,5 +69,30 @@ func (q *Quote) saveFull() (err error) {
 }
 
 func (q *Quote) print() {
-	fmt.Printf("%s\n    - %s, %s", q.body, q.author.name, q.movie.title)
+	fmt.Printf("%s\n	- %s, %s", q.body, q.author.name, q.movie.title)
+}
+
+func getStats() (stats map[string]int, err error) {
+	db, err = connectPostgres()
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	result, err := db.Query(sqlStatements["select_stats"])
+	if err != nil {
+		return
+	}
+
+	stats = make(map[string]int)
+	for result.Next() {
+		var (
+			stat string
+			value int
+		)
+		result.Scan(&stat, &value)
+		stats[stat] = value
+	}
+	err = result.Err()
+	return
 }

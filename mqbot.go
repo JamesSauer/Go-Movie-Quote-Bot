@@ -14,12 +14,14 @@ import (
 
 /* TODO:
 - Fix TODOs tied to specific code snippets before tackling the ones below.
+- Use golint on all files.
 - Replace the functions in the dom.go file with goquery. https://github.com/PuerkitoBio/goquery
 - Make the scraping more robust by considering edge cases.
   (E.g. quotes following the "Others" heading, where the name of the character appears before the quote.)
 - Write some tests.
 
 BONUS:
+- Package the sql files into the executable.
 - Post the quotes somewhere instead of just printing them to the console. (Twitter? Separate web page?)
 - Make the selection of quotes more interesting than just selecting them at random. (Maybe find quotes that fit a theme?)
 - Maybe fetch some meta data from themoviedb.org and incorporate it into the tweets or web page.
@@ -41,6 +43,13 @@ func main() {
 			}
 			fmt.Println("Successfully connected to DB!")
 			db.Close()
+		// Initialize database by setting up the schema:
+		case "initdb":
+			err := executeSchema()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			fmt.Println("Successfully set up database schema.")
 		// Force scraping a fresh quote:
 		case "--fresh", "-f":
 			printRandom(getRandomQuoteFresh)
@@ -68,23 +77,18 @@ func main() {
 			fmt.Printf("Successfully scraped and saved the entry for the movie \"%s\"!\n", page.movie.title)
 		// Scrape ALL the pages:
 		case "scrapeall":
-			warning := "This command will attempt to scrape the entirety of wikiquote.org's movie quotes.\n" +
-				"This will take more than 10 minutes."
-
-			if confirm(warning) {
-				var err error
-				db, err = connectPostgres()
-				if err != nil {
-					log.Fatalln(err)
-				}
-				numPages, elapsedTime, err := scrapeAll()
-				fmt.Printf("\rScraped %d pages in %s!\n", numPages, elapsedTime)
-				if err != nil {
-					log.Fatal(err)
-				}
-				return
+			numPages, elapsedTime, err := scrapeAll()
+			fmt.Printf("\rScraped %d pages in %s!\n", numPages, elapsedTime)
+			if err != nil {
+				log.Fatal(err)
 			}
-			return
+		case "stats":
+			stats, err := getStats()
+			if err != nil {
+				log.Fatalln(err)
+			}
+			msgStr := "MQBot has collected and stored %d quotes from %d characters and %d movies this far."
+			fmt.Printf(msgStr, stats["quote_count"], stats["character_count"], stats["movie_count"])
 		// Using unknown flags or subcommands defaults to behaviour without flags or subcommands:
 		default:
 			fmt.Println("Movie quote bot doesn't have that command, but here's a random quote instead:")
@@ -93,8 +97,9 @@ func main() {
 	}
 }
 
-func confirm(warning string) (confirmed bool) {
-	fmt.Println(warning + "\n\nDo you want to proceed? (yes/y/no/n)")
+// A helper to ask the user a yes/no question.
+func confirm(question string) (confirmed bool) {
+	fmt.Println(question + " (yes/y/no/n)")
 
 	findWords := regexp.MustCompile(`^((?i)yes|y|no|n)\s`)
 	keepAsking := true
@@ -172,16 +177,16 @@ func getRandomQuoteDB() (quote *Quote, err error) {
 		body          string
 		author        string
 		title         string
-		wikiquote_url string
+		wikiquoteURL string
 	)
 	row := db.QueryRow(sqlStatements["select_random_quote"])
-	err = row.Scan(&body, &author, &title, &wikiquote_url)
+	err = row.Scan(&body, &author, &title, &wikiquoteURL)
 	if err != nil {
 		return
 	}
 	movie := &Movie{
 		title:        title,
-		wikiquoteURL: wikiquote_url,
+		wikiquoteURL: wikiquoteURL,
 	}
 	char := &Character{
 		name: author,

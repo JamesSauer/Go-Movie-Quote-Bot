@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	// "strings"
 )
@@ -55,7 +56,7 @@ func loadSQL() {
 		extension := submatches[2]
 
 		if extension == "sql" {
-			var sqlFileContent, err = ioutil.ReadFile(sqlDirName + "/" + f.Name())
+			var sqlFileContent, err = ioutil.ReadFile(filepath.Join(sqlDirName, f.Name()))
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -66,8 +67,8 @@ func loadSQL() {
 	return
 }
 
-func executeSchema() {
-	var err error
+// Set up database schema.
+func executeSchema() (err error) {
 	if db == nil {
 		db, err = connectPostgres()
 		defer db.Close()
@@ -76,59 +77,15 @@ func executeSchema() {
 		log.Fatalln(err)
 	}
 
+	// TODO: Do the following in one transaction:
 	schema := sqlStatements["db_schema"]
 	statements := regexp.MustCompile(`;\s*`).Split(schema, -1)
 
 	for _, statement := range statements {
-		_, err := db.Exec(statement)
+		_, err = db.Exec(statement)
 		if err != nil {
-			log.Fatalln(err)
+			return
 		}
 	}
+	return
 }
-
-// TODO: Make it work with atomic queries first. Ignore the below and worry about optimization later.
-
-// func insertMovieAndCharacters(film *movie, characters []*character) {
-// 	names := make([]string, 0)
-// 	for _, char := range characters {
-// 		names = append(names, char.name)
-// 	}
-// 	rows, err := db.Query(sqlStatements["insert_movie_and_characters"], film.wikiquoteURL, film.title, pgArrayLiteral(names))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer rows.Close()
-
-// }
-
-// func pgArrayLiteral(slice []string) string {
-// 	return "{'" + strings.Join(slice, "','") + "'}"
-// }
-
-// func insertQuoteBatch(batch []*quote) {
-// 	txn, err := db.Begin()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	stmt, _ := txn.Prepare(pq.CopyIn("quotes", "movie", "author", "body"))
-
-// 	for _, quote := range batch {
-// 		_, err := stmt.Exec(quote.movie, quote.author, quote.body)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	}
-// 	_, err = stmt.Exec()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	err = stmt.Close()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	err = txn.Commit()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }

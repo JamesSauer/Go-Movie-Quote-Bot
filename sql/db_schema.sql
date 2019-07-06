@@ -16,7 +16,7 @@ CREATE TABLE quotes (
 	id UUID DEFAULT gen_random_uuid(),
 	author varchar(128),
 	movie varchar(128),
-	body TEXT NOT NULL,
+	body TEXT UNIQUE NOT NULL,
 	FOREIGN KEY(author) REFERENCES characters(name) ON DELETE CASCADE,
 	FOREIGN KEY(movie) REFERENCES movies(wikiquote_url) ON DELETE CASCADE,
 	PRIMARY KEY(id)

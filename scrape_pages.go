@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"regexp"
 	"time"
@@ -45,55 +46,70 @@ func scrapePage(movieURL string) (page *Page, err error) {
 }
 
 func scrapeAll(params ...float64) (numScraped int, took time.Duration, err error) {
-	var reqsPerSec float64
-	switch len(params) {
-	case 0:
-		reqsPerSec = 5.0
-	case 1:
-		if params[0] > 100.0 {
-			reqsPerSec = 100.0
-		} else if params[0] < 0.1 {
-			reqsPerSec = 0.1
-		} else {
-			reqsPerSec = params[0]
+	warning := "This command will attempt to scrape the entirety of wikiquote.org's movie quotes.\n" +
+		"This might take more than 10 minutes. Do you want to proceed?"
+
+	if confirm(warning) {
+		if db == nil {
+			db, err = connectPostgres()
+			defer db.Close()
 		}
-	default:
-		err = errors.New("scrapeAll expects one argument at most that specifies the requests per second as float64")
-	}
-	timeout := int(math.Ceil(1000 / reqsPerSec))
-
-	start := time.Now()
-	urls, err := getAllURLs()
-	if err != nil {
-		return
-	}
-
-	numScrapeErrors := 0
-	numDBErrors := 0
-	for i, url := range urls {
-		fmt.Printf("\rCurrently scraping page %d.", i+1)
-		page, err := scrapePage("https://en.wikiquote.org" + url)
 		if err != nil {
-			numScrapeErrors++
+			log.Fatalln(err)
 		}
 
-		err = page.save()
+		var reqsPerSec float64
+		switch len(params) {
+		case 0:
+			reqsPerSec = 5.0
+		case 1:
+			if params[0] > 100.0 {
+				reqsPerSec = 100.0
+			} else if params[0] < 0.1 {
+				reqsPerSec = 0.1
+			} else {
+				reqsPerSec = params[0]
+			}
+		default:
+			err = errors.New("scrapeAll expects one argument at most that specifies the number of requests per second as float64")
+		}
+		timeout := int(math.Ceil(1000 / reqsPerSec))
+
+		// Start scraping
+		start := time.Now()
+		var urls []string
+		urls, err = getAllURLs()
 		if err != nil {
-			numDBErrors++
+			return
+		}
+		numScrapeErrors := 0
+		numDBErrors := 0
+		runIndicator := [...]string{".....", " ....", ". ...", ".. ..", "... .", ".... "}
+		for i, url := range urls {
+			fmt.Printf("\rScraping page %d of %d %s", i+1, len(urls), runIndicator[i%len(runIndicator)])
+			page, err := scrapePage("https://en.wikiquote.org" + url)
+			if err != nil {
+				numScrapeErrors++
+			}
+
+			err = page.save()
+			if err != nil {
+				numDBErrors++
+			}
+
+			time.Sleep(time.Duration(timeout) * time.Millisecond)
 		}
 
-		time.Sleep(time.Duration(timeout) * time.Millisecond)
+		numScraped = len(urls)
+		took = time.Since(start)
+
+		if numScrapeErrors == 0 && numDBErrors == 0 {
+			return
+		}
+
+		errStr := "Encountered %d errors while scraping and %d errors while writing to the database"
+		err = fmt.Errorf(errStr, numScrapeErrors, numDBErrors)
 	}
-
-	numScraped = len(urls)
-	took = time.Since(start)
-
-	if numScrapeErrors == 0 && numDBErrors == 0 {
-		return
-	}
-
-	errStr := "Encountered %d errors while scraping and %d errors while writing to the database"
-	err = fmt.Errorf(errStr, numScrapeErrors, numDBErrors)
 	return
 }
 
@@ -103,10 +119,11 @@ var nonCharacterHeadings = [...]string{
 	"Contents",
 	"Dialogue",
 	"External links",
+	"Footnote",
 	"Navigation menu",
 	"See also",
 	"Taglines",
-	"Footnote",
+	"Voice cast",
 }
 
 func isCharacter(title string) bool {
