@@ -77,15 +77,6 @@ func executeSchema() (err error) {
 		log.Fatalln(err)
 	}
 
-	// TODO: Do the following in one transaction:
-	schema := sqlStatements["db_schema"]
-	statements := regexp.MustCompile(`;\s*`).Split(schema, -1)
-
-	for _, statement := range statements {
-		_, err = db.Exec(statement)
-		if err != nil {
-			return
-		}
-	}
+	_, err = db.Exec(sqlStatements["db_schema"])
 	return
 }
